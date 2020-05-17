@@ -50,6 +50,11 @@
 #define RR_IN1_PIN 33
 #define RR_IN2_PIN 32
 
+#define FR_CHANNEL 1
+#define FL_CHANNEL 2
+#define RR_CHANNEL 3
+#define RL_CHANNEL 4
+
 
 
 // You should get Auth Token in the Blynk App.
@@ -58,14 +63,15 @@ char auth[] = "tT_R_ZV88d-Np3eu7cZpWdFKKEPoWCLs";
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "dlink-1644";
-char pass[] = "justine890424";
+char ssid[] = "要連線的WIFI SSID";
+char pass[] = "WIFI的密碼";
 int outputPower = 0;
-int reduce = 0;
+int turnPower = 0;
 int forwardStatus = 1;
 int feq = 5000;
 int dutyCycle = 210;
-uint8_t ledArray[4] = {1, 2, 3, 4}; // three led channels
+int continueOutput = false;
+int stoped = true;
 //640 - 850
 
 void stopCar(){
@@ -73,35 +79,41 @@ void stopCar(){
   ledcWrite(2,0);
   ledcWrite(3,0);
   ledcWrite(4,0); 
+  stoped = true;
 }
 
 void enPower(){
   int p1 = map(outputPower,0,1023,0,255);
-  Serial.print("p1 = ");
+  Serial.print("output power level = ");
   Serial.println(p1);
-  if (p1 > dutyCycle){
-    Serial.print("Gather than base duty Cycle : ");
-    Serial.println(p1);
-    int max = p1;
-    p1 = dutyCycle;
-      Serial.print("ducy Cycle start from : ");
-      Serial.println(p1);
-    while(p1 < max){
-      ledcWrite(1,p1);
-      ledcWrite(2,p1);
-      ledcWrite(3,p1);
-      ledcWrite(4,p1);
-      delay(100);
-      p1+=1;
-      Serial.print("Next ducy cycle : ");
-      Serial.println(p1);
-    }
-  }else{
-    ledcWrite(1,p1);
-    ledcWrite(2,p1);
-    ledcWrite(3,p1);
-    ledcWrite(4,p1);
-  } 
+  ledcWrite(1,p1);
+  ledcWrite(2,p1);
+  ledcWrite(3,p1);
+  ledcWrite(4,p1);
+  // if ((p1 > dutyCycle) && stoped){
+  //   Serial.print("Gather than base duty Cycle : ");
+  //   Serial.println(dutyCycle);
+  //   int max = p1;
+  //   p1 = dutyCycle;
+  //     Serial.print("ducy Cycle start from : ");
+  //     Serial.println(p1);
+  //   while(p1 < max){
+  //     ledcWrite(1,p1);
+  //     ledcWrite(2,p1);
+  //     ledcWrite(3,p1);
+  //     ledcWrite(4,p1);
+  //     delay(100);
+  //     p1+=1;
+  //     Serial.print("Next ducy cycle : ");
+  //     Serial.println(p1);
+  //   }
+  // }else{
+  //   ledcWrite(1,p1);
+  //   ledcWrite(2,p1);
+  //   ledcWrite(3,p1);
+  //   ledcWrite(4,p1);
+  // }
+  stoped = false; 
 }
 
 void forward(){
@@ -178,38 +190,67 @@ void goLeft(){
 
 void right(){
   int p1 = map(outputPower,0,1023,0,255);
+  int p2 = map(turnPower,0,1023,0,255);
+  if(forwardStatus==1){
+    ledcWrite(FR_CHANNEL,0);
+    ledcWrite(RR_CHANNEL,p2);
+    ledcWrite(FL_CHANNEL,p1);
+    ledcWrite(RL_CHANNEL,p1);
+  }else{
+    ledcWrite(FR_CHANNEL,p2);
+    ledcWrite(RR_CHANNEL,0);
+    ledcWrite(FL_CHANNEL,p1);
+    ledcWrite(RL_CHANNEL,p1);
+  }
   //如果是前進狀態，停右前輪
   //如果是倒退狀態，停右後輪
-  if(forwardStatus==1){
-    ledcWrite(1,0);
-  }else{
-    ledcWrite(1,p1);
-  }
-  ledcWrite(2,p1);
-  if(forwardStatus==1){
-    ledcWrite(3,p1);
-  }else{
-    ledcWrite(3,0);
-  }
-  ledcWrite(4,p1);  
+  // if(forwardStatus==1){
+  //   ledcWrite(FR_CHANNEL,0);
+  //   ledcWrite(FL_CHANNEL,p2);
+  // }else{
+  //   ledcWrite(FR_CHANNEL,p1);
+  //   ledcWrite(FL_CHANNEL,p1);
+  // }
+  // if(forwardStatus==1){
+  //   ledcWrite(RR_CHANNEL,p1);
+  //   ledcWrite(RL_CHANNEL,p1);  
+  // }else{
+  //   ledcWrite(RR_CHANNEL,0);
+  //   ledcWrite(RL_CHANNEL,p2);  
+  // }
 }
 
 void left(){
   int p1 = map(outputPower,0,1023,0,255);
+  int p2 = map(turnPower,0,1023,0,255);
+  if(forwardStatus==1){
+    ledcWrite(FR_CHANNEL,p1);
+    ledcWrite(RR_CHANNEL,p1);
+    ledcWrite(FL_CHANNEL,0);
+    ledcWrite(RL_CHANNEL,p2);
+  }else{
+    ledcWrite(FR_CHANNEL,p1);
+    ledcWrite(RR_CHANNEL,p1);
+    ledcWrite(FL_CHANNEL,p2);
+    ledcWrite(RL_CHANNEL,0);
+  }
+
   //如果是前進狀態，停左前輪
   //如果是倒退狀態，停左後輪
-  ledcWrite(1,p1);
-  if(forwardStatus==1){
-    ledcWrite(2,0);
-  }else{
-    ledcWrite(2,p1);
-  }
-  ledcWrite(3,p1);
-  if(forwardStatus==1){
-    ledcWrite(4,p1);
-  }else{
-    ledcWrite(4,0);
-  }
+  // if(forwardStatus==1){
+  //   ledcWrite(FL_CHANNEL,0);
+  //   ledcWrite(RL_CHANNEL,p2);
+  // }else{
+  //   ledcWrite(FL_CHANNEL,p1);
+  //   ledcWrite(RL_CHANNEL,p1);
+  // }
+  // if(forwardStatus==1){
+  //   ledcWrite(RR_CHANNEL,p1);
+  //   ledcWrite(FR_CHANNEL,p1);
+  // }else{
+  //   ledcWrite(FL_CHANNEL,p2);
+  //   ledcWrite(RL_CHANNEL,0);
+  // }
 }
 
 void spinRight(){
@@ -232,14 +273,14 @@ void setup()
   Serial.begin(115200);
 
   Blynk.begin(auth, ssid, pass);
-  ledcAttachPin(FR_PWM_PIN, 1); // assign RGB led pins to channels
-  ledcAttachPin(FL_PWM_PIN, 2);
-  ledcAttachPin(RR_PWM_PIN, 3);
-  ledcAttachPin(RL_PWM_PIN, 4);
-  ledcSetup(1, feq, 8); // 12 kHz PWM, 8-bit resolution
-  ledcSetup(2, feq, 8);
-  ledcSetup(3, feq, 8);
-  ledcSetup(4, feq, 8);
+  ledcAttachPin(FR_PWM_PIN, FR_CHANNEL); // assign RGB led pins to channels
+  ledcAttachPin(FL_PWM_PIN, FL_CHANNEL);
+  ledcAttachPin(RR_PWM_PIN, RR_CHANNEL);
+  ledcAttachPin(RL_PWM_PIN, RL_CHANNEL);
+  ledcSetup(FR_CHANNEL, feq, 8); // 12 kHz PWM, 8-bit resolution
+  ledcSetup(FL_CHANNEL, feq, 8);
+  ledcSetup(RR_CHANNEL, feq, 8);
+  ledcSetup(RL_CHANNEL, feq, 8);
   pinMode(FR_IN1_PIN,OUTPUT);
   pinMode(FR_IN2_PIN,OUTPUT);
   pinMode(FL_IN1_PIN,OUTPUT);
@@ -252,19 +293,27 @@ void setup()
 
 void loop()
 {
+  if ((WiFi.status() != WL_CONNECTED) || !Blynk.connected()){
+    continueOutput = false;
+    stopCar();
+  }
   Blynk.run();
+  // if(continueOutput){
+  //   enPower();
+  // }
 }
 
 //forward
 BLYNK_WRITE(V1) {
   int x = param.asInt();
-  // Do something with x and y
-  Serial.print("forward power = ");
+  Serial.print("forward = ");
   Serial.println(x);
   if(x == 1){
+    continueOutput = true;
     forward();
     enPower();
   }else{
+    continueOutput = false;
     stopCar();
   }
 }
@@ -272,68 +321,88 @@ BLYNK_WRITE(V1) {
 //goback
 BLYNK_WRITE(V2) {
   int x = param.asInt();
-  // Do something with x and y
-  Serial.print("goback power = ");
+  Serial.print("goback = ");
   Serial.println(x);
   if(x == 1){
+    continueOutput = true;
     goBack();
     enPower();
   }else{
+    continueOutput = false;
     stopCar();
   }
 }
 
+//set output power level
 BLYNK_WRITE(V3) {
   outputPower = param.asInt();
-  // Do something with x and y
   Serial.print("set power = ");
   Serial.println(outputPower);
+  if(continueOutput){
+    enPower();
+  }
 }
 
+//設定轉彎力道
 BLYNK_WRITE(V4) {
-  int x = param.asInt();
-  if(x > outputPower){
-    reduce = outputPower;
-  }else{
-    reduce = x;
-  }
-  // Do something with x and y
-  Serial.print("reduce = ");
-  Serial.println(reduce);
+  turnPower = param.asInt();
+  Serial.print("set turn power = ");
+  Serial.println(turnPower);
 }
 
 BLYNK_WRITE(V5) {
   int x = param.asInt();
-  // Do something with x and y
-  Serial.print("forward power = ");
-  Serial.println(x);
+  Serial.println("=== turn right ===");
   if(x == 1){
     goRight();
     right();
   }else{
-    stopCar();
+    if(forwardStatus==1){
+      forward();
+    }
+    else
+    {
+      goBack();
+    }  
+    if(continueOutput){
+      enPower();
+    }
+    else
+    {
+      stopCar();
+    }
   }
 }
 
 BLYNK_WRITE(V6) {
   int x = param.asInt();
-  // Do something with x and y
-  Serial.print("forward power = ");
-  Serial.println(x);
+  Serial.println("=== turn left ===");
   if(x == 1){
     goLeft();
     left();
   }else{
-    stopCar();
+    if(forwardStatus==1){
+      forward();
+    }
+    else
+    {
+      goBack();
+    }
+    if(continueOutput){
+      enPower();
+    }
+    else
+    {
+      stopCar();
+    }
   }
 }
 
 BLYNK_WRITE(V7) {
   int x = param.asInt();
-  // Do something with x and y
-  Serial.print("forward power = ");
-  Serial.println(x);
+  Serial.println("==== spin right ====");
   if(x == 1){
+    forward(); //先回到前進狀態
     spinRight();
     enPower();
   }else{
@@ -343,10 +412,9 @@ BLYNK_WRITE(V7) {
 
 BLYNK_WRITE(V8) {
   int x = param.asInt();
-  // Do something with x and y
-  Serial.print("forward power = ");
-  Serial.println(x);
+  Serial.println("==== spin left ====");
   if(x == 1){
+    forward(); //先回到前進狀態
     spinLeft();
     enPower();
   }else{
