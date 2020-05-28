@@ -1,7 +1,0 @@
-{
-  "name": "CarControl",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular"
-}
